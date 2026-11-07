@@ -1,25 +1,44 @@
-# Check-List-Network
+# RAC Network Operations
 
-A vendor-neutral working checklist for planning, validating, and handing over a small office or branch network. Use it for a new installation or a significant change to an existing network. This first version assumes a managed router/firewall, switches, wired clients, and optionally Wi-Fi; adapt or mark items not applicable for your environment.
+Angular + Go + MySQL foundation for the Royal Academy of Cambodia. This is an initial working increment, not the completed production platform. Requirements are preserved in [docs/requirements.md](docs/requirements.md); design and delivery gates are in [docs/architecture.md](docs/architecture.md).
 
-## Start here
+Implemented: sign-in/out, database-backed sessions and role checks, building/location/device registration and lists, transactional inventory audit trail, API user creation/role updates, responsive Angular workspace, versioned MySQL migration runner and Compose deployment. Device status remains unknown; no monitoring or vendor data is fabricated.
 
-1. Agree on the site, scope, change window, owner, and acceptance criteria with the network owner.
-2. Copy [the site record](templates/site-record.md) into a **private** location and fill in the inventory and test results as you work. This repository is public: do not commit credentials, configuration backups, internal addresses, diagrams, or other sensitive site data.
-3. Work through the [network checklist](checklists/network-deployment.md) in order. Record evidence and the owner for failures or exceptions in the site record. An unchecked box means work remains; record “not applicable” with a reason rather than checking an unperformed test.
-4. Review the acceptance criteria and open exceptions with the owner before handover. Use the [task breakdown](docs/task-breakdown.md) to plan follow-up improvements to this starter.
+## Development
 
-## Scope
+Requirements: Docker with Compose, Node 24, Go 1.27.3 (the operating system binary named `go` may be an unrelated utility; cloud toolchain is `/workspace/toolchains/go/bin/go`).
 
-The checklist covers discovery, physical installation, addressing and core services, segmentation and access, validation, recovery, and handover. It does not prescribe a vendor, IP plan, topology, firewall rules, or performance thresholds. Agree those values for each site before testing. Cloud networking, advanced routing, regulatory certification, and automated configuration are outside this first version.
+1. Copy `.env.example` to `.env`. Set unique DB_PASSWORD, DB_ROOT_PASSWORD, BOOTSTRAP_EMAIL and a random 14–72 byte BOOTSTRAP_PASSWORD. Keep `.env` private (mode 0600). No credentials belong in Git.
+2. `docker compose build` (uses a read-only BuildKit CA mount, default system trust bundle; set RAC_CA_BUNDLE if needed).
+3. `docker compose up -d`. MySQL starts, migration and bootstrap jobs finish, then API and web start. Database storage is a named volume.
+4. Check `docker compose ps -a` and make a local request to port 4200 `/health/ready`; expect `{"status":"ready"}`. Sign in using the private bootstrap values in `.env`. Register actual buildings and locations before devices.
 
-## Repository layout
+The web port binds loopback only. Local HTTP sets COOKIE_SECURE=false explicitly. Production requires internal HTTPS, APP_ORIGIN matching the HTTPS origin, COOKIE_SECURE=true and a trusted reverse proxy. Do not publish this development configuration to the Internet.
 
-```text
-README.md                         Purpose and workflow
-checklists/network-deployment.md  Practical deployment and verification checklist
-templates/site-record.md          Reusable private site and test record
-docs/task-breakdown.md            Prioritized next steps and acceptance criteria
-```
+### Native iteration
 
-Changes to the checklist should describe the intended outcome and how to verify it. Avoid including real site data in examples or contributions.
+Start only the database: `docker compose up -d db`. Export the DB values securely from your local `.env`, set DB_ADDRESS=127.0.0.1:3306, DB_USER=racnoc, DB_NAME=racnoc. From backend, run `go run ./cmd/api migrate`, then `go run ./cmd/api bootstrap` once, and `go run ./cmd/api`. Export APP_ORIGIN=http://localhost:4200 and COOKIE_SECURE=false for local HTTP. From frontend: `npm ci`, then `npm start -- --host 127.0.0.1 --proxy-config proxy.conf.json`. Do not create a Git worktree: cloud tasks already have isolated checkouts.
+
+## Validation
+
+From backend: `go test ./...` runs the unit test and explicitly skips the database suite without TEST_DB=1. Full database integration requires a fresh isolated database whose name ends `_test`, migrated with the same runner. Set DB_NAME to that database and TEST_DB=1, then `go test -v ./...`. Never use the persistent development database for this test. Tests exercise login, invalid credentials, sessions, inventory, duplicate and IP validation, audit, user administration, viewer denial and logout. The test database must be fresh on every run.
+
+From frontend: `npm test -- --watch=false` and `npm run build`.
+
+From the repository root, run `python3 scripts/test-integration.py` to create a unique disposable database, apply migrations twice, run the full Go suite and remove only that database. It uses the running Compose database and the ignored local `.env`; it does not change development inventory. Set `GO_BINARY` if the Go compiler is not on PATH. In this cloud environment use `GO_BINARY=/workspace/toolchains/go/bin/go GOCACHE=/workspace/.cache/go-build python3 scripts/test-integration.py`.
+
+With Compose running, `node scripts/smoke.mjs` checks the HTTP workflow. `node scripts/test-browser.cjs` checks the actual UI in Chromium: invalid and valid login, session persistence across reload, navigation, required fields, audit display, mobile layout, logout and browser credential protection. The browser test requires the Playwright Node package and Chromium, both supplied by this cloud environment; set CHROMIUM_PATH for another browser installation. It logs in with local bootstrap credentials and adds normal login audit records, but creates no inventory records. It does not yet cover inventory creation through the browser, live devices or later-phase modules.
+
+## Backup and restore
+
+Stop application writes first. Use `docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump -uroot --single-transaction --routines --triggers racnoc'` redirected to a protected file outside Git. Encrypt backups, retain off-host copies and test restoration in an isolated database. Restore with the matching mysql client through stdin and a separately created database. Never overwrite the live database without a reviewed recovery plan. Named volumes persist across `docker compose down`; `down -v` destroys them. See [database policy](docs/database.md) for migration and rollback rules.
+
+## Limitations and next work
+
+Foundation is partial: full inventory metadata, edits, permission administration UI, password lifecycle, failed-action audit and production database privilege separation remain. Compose uses one database user for migration/runtime in development; split credentials and enforce audit INSERT/SELECT-only privileges before production. Login throttling is per process and socket peer; put a trusted edge limiter in front of multiple replicas. Session cleanup, secure uploads, encrypted vendor secrets, TLS provisioning, monitoring, operations workflows, reporting and AI follow the roadmap. No vendor API calls or network configuration writes are implemented.
+
+API details: [docs/api.md](docs/api.md). Schema design: [docs/database.md](docs/database.md).
+
+## Network deployment checklist
+
+The original vendor-neutral deployment checklist and site-record template remain available. See [network checklist guidance](docs/network-checklist.md), [deployment checklist](checklists/network-deployment.md), [site record template](templates/site-record.md), and [checklist task breakdown](docs/task-breakdown.md). Keep completed site records and sensitive infrastructure data private.

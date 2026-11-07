@@ -1,0 +1,65 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: racnoc
+      MYSQL_USER: racnoc
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD}
+      TZ: UTC
+    ports: ["127.0.0.1:3306:3306"]
+    volumes: ["mysql_data:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  migrate:
+    build:
+      context: ./backend
+      secrets: [proxy_ca]
+    command: ["migrate"]
+    environment: &database
+      DB_ADDRESS: db:3306
+      DB_NAME: racnoc
+      DB_USER: racnoc
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      db: {condition: service_healthy}
+  bootstrap:
+    build:
+      context: ./backend
+      secrets: [proxy_ca]
+    command: ["bootstrap"]
+    environment:
+      <<: *database
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?Set BOOTSTRAP_EMAIL}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?Set BOOTSTRAP_PASSWORD}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  api:
+    build:
+      context: ./backend
+      secrets: [proxy_ca]
+    environment:
+      <<: *database
+      LISTEN_ADDRESS: 0.0.0.0:8080
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:4200}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    depends_on:
+      bootstrap: {condition: service_completed_successfully}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+  web:
+    build:
+      context: ./frontend
+      secrets: [proxy_ca]
+    ports: ["127.0.0.1:4200:80"]
+    depends_on: [api]
+volumes:
+  mysql_data:
+
+secrets:
+  proxy_ca:
+    file: ${RAC_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}
