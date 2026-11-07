@@ -1,0 +1,56 @@
+<section class="table-card" aria-label="Records">
+  <div class="table-heading">
+    <h2>{{ resource() === 'devices' ? 'Registered assets' : 'Records' }}</h2>
+    <button class="secondary" (click)="refreshed.emit()">Refresh</button>
+  </div>
+  @if (busy()) {
+    <p role="status" class="empty">Loading records…</p>
+  } @else if (rows().length === 0) {
+    <div class="empty">
+      <div class="empty-icon">◇</div>
+      <h2>No records yet</h2>
+      <p>
+        {{
+          resource() === 'devices'
+            ? 'Start with a building and location, then register your first device.'
+            : 'Records will appear here as your team works.'
+        }}
+      </p>
+    </div>
+  } @else {
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            @for (k of columns(); track k) {
+              <th>{{ k.replaceAll('_', ' ') }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row['id']) {
+            <tr>
+              @for (k of columns(); track k) {
+                <td>{{ row[k] }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  <footer>
+    <span>100 records per page · Offset {{ offset() }}</span>
+    <div>
+      <button class="secondary" [disabled]="offset() === 0" (click)="pageChanged.emit(-pageSize)">
+        Previous</button
+      ><button
+        class="secondary"
+        [disabled]="rows().length < pageSize"
+        (click)="pageChanged.emit(pageSize)"
+      >
+        Next
+      </button>
+    </div>
+  </footer>
+</section>

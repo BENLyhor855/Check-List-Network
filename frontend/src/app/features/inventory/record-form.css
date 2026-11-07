@@ -1,0 +1,26 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.record-form {
+  background: white;
+  border: 1px solid #e0e6eb;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.record-form {
+  padding: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.record-form h2,
+.record-form > div {
+  width: 100%;
+}
+@media (prefers-color-scheme: dark) {
+  .record-form {
+    background: #20323d;
+    border-color: #354952;
+  }
+}

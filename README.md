@@ -4,6 +4,8 @@ Angular + Go + MySQL foundation for the Royal Academy of Cambodia. This is an in
 
 Implemented: sign-in/out, database-backed sessions and role checks, building/location/device registration and lists, transactional inventory audit trail, API user creation/role updates, responsive Angular workspace, versioned MySQL migration runner and Compose deployment. Device status remains unknown; no monitoring or vendor data is fabricated.
 
+For step-by-step local setup, login, manual checks and automated tests, see [Run and test locally](docs/local-development.md).
+
 ## Development
 
 Requirements: Docker with Compose, Node 24, Go 1.27.3 (the operating system binary named `go` may be an unrelated utility; cloud toolchain is `/workspace/toolchains/go/bin/go`).
@@ -42,3 +44,15 @@ API details: [docs/api.md](docs/api.md). Schema design: [docs/database.md](docs/
 ## Network deployment checklist
 
 The original vendor-neutral deployment checklist and site-record template remain available. See [network checklist guidance](docs/network-checklist.md), [deployment checklist](checklists/network-deployment.md), [site record template](templates/site-record.md), and [checklist task breakdown](docs/task-breakdown.md). Keep completed site records and sensitive infrastructure data private.
+
+## Code organization
+
+- `backend/cmd/api`: application entry point.
+- `backend/internal/config`, `database`: configuration, connections and migrations.
+- `backend/internal/api`: HTTP routing, middleware and handlers.
+- `backend/internal/auth`, `audit`, `inventory`: bootstrap, audit writes, inventory validation and persistence.
+- `frontend/src/app/core`: typed API clients and session management.
+- `frontend/src/app/features`: login, inventory workspace and record form.
+- `frontend/src/app/shared`: reusable record table.
+
+See [architecture](docs/architecture.md) for module responsibilities.

@@ -4,6 +4,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"net/mail"
+	"racnoc/internal/audit"
 	"strconv"
 	"strings"
 )
@@ -105,7 +106,7 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request) {
 		fail(w, 405, "method not allowed")
 		return
 	}
-	if _, e = tx.ExecContext(r.Context(), "INSERT INTO audit_logs(user_id,action,target,result) VALUES(?,?,?,'success')", p.ID, "users."+strings.ToLower(r.Method), strconv.FormatInt(target, 10)); e != nil {
+	if e = audit.Record(r.Context(), tx, p.ID, "users."+strings.ToLower(r.Method), strconv.FormatInt(target, 10)); e != nil {
 		fail(w, 500, "audit failed")
 		return
 	}

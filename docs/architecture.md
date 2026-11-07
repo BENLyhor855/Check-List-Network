@@ -21,3 +21,11 @@ Future metrics use time-partitioned bounded retention tables (raw 30 days, hourl
 6. AI: read-only provider interface, evidence provenance, facts/hypotheses separation, retrieval authorization and evaluation.
 
 Each gate requires implemented behavior and passing tests before claiming completion. Production gates include TLS, credential lifecycle, rate limits across replicas, disaster recovery, security review, accessibility and end-to-end browser tests.
+
+## Implemented code organization
+
+The API composition root is `backend/cmd/api/main.go`. Environment settings live in `internal/config`; database connection and migration lifecycle in `internal/database`; bootstrap authentication in `internal/auth`; shared transactional audit writes in `internal/audit`. Inventory validation and SQL live in `internal/inventory`. The HTTP layer in `internal/api` is split into routing, middleware, authentication, health, JSON responses, inventory and user handlers. Audit writes remain in the same transaction as business mutations. Authentication/user HTTP handlers still own their SQL; these can be extracted when their domain workflows grow.
+
+Angular `app.ts` now composes session restoration, login and the authenticated workspace. `core/auth` owns the session service; `core/api` owns typed request models, inventory access and error messages. `features/auth` contains login; `features/inventory` contains navigation and record creation. `shared/record-table` renders paginated records. Component styles own layout; global styles provide common typography and controls. Requests are cancelled on component destruction and when changing the active inventory section. Form instances are destroyed on cancel/navigation, clearing their state.
+
+The HTTP paths, database schema, deployment commands and dependency versions remain unchanged. Offset parsing now rejects partially numeric values such as `1junk`. The refactor is about maintainability, not a measured performance improvement.

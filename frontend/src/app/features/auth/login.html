@@ -1,0 +1,27 @@
+<main class="login">
+  <div class="brand">RAC <span>NETWORK OPERATIONS</span></div>
+  <h1>Your network.<br />Your operations.</h1>
+  <p>Royal Academy of Cambodia · Internal operations platform</p>
+  <form (ngSubmit)="login(form)" #form="ngForm">
+    <h2>Sign in</h2>
+    <label
+      >Email<input
+        name="email"
+        type="email"
+        [(ngModel)]="email"
+        required
+        autocomplete="username" /></label
+    ><label
+      >Password<input
+        name="password"
+        type="password"
+        [(ngModel)]="password"
+        required
+        autocomplete="current-password" /></label
+    ><button [disabled]="busy() || form.invalid">{{ busy() ? 'Signing in…' : 'Sign in →' }}</button>
+  </form>
+  @if (error()) {
+    <p role="alert" class="error">{{ error() }}</p>
+  }
+  <small>Authorized RAC personnel only. Activity is audited.</small>
+</main>

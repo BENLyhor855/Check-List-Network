@@ -1,0 +1,82 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.table-card {
+  background: white;
+  border: 1px solid #e0e6eb;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 23px;
+  border-bottom: 1px solid #e9eef1;
+}
+.empty {
+  padding: 70px 24px;
+  text-align: center;
+}
+.empty-icon {
+  font-size: 48px;
+  color: #74a99b;
+}
+.empty h2 {
+  font-size: 18px;
+}
+.empty p {
+  max-width: 400px;
+  margin: auto;
+}
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e9eef1;
+  padding: 16px 22px;
+  color: #81929f;
+  font-size: 11px;
+}
+footer button {
+  padding: 7px 10px;
+  margin-left: 6px;
+}
+.scroll {
+  overflow: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+  text-align: left;
+}
+th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #7b8a95;
+  background: #fafbfc;
+}
+td,
+th {
+  padding: 15px 20px;
+  border-bottom: 1px solid #edf0f3;
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) {
+  .table-card {
+    background: #20323d;
+    border-color: #354952;
+  }
+  th {
+    background: #243944;
+  }
+  td,
+  th,
+  footer,
+  .table-heading {
+    border-color: #354952;
+  }
+}

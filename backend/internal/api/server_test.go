@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"racnoc/internal/auth"
 	"strings"
 	"testing"
 
@@ -46,7 +47,7 @@ func TestInventoryIntegration(t *testing.T) {
 		t.Fatal(e)
 	}
 	defer db.Close()
-	if e = Bootstrap(context.Background(), db, "integration@rac.test", "integration-test-password-2026"); e != nil {
+	if e = auth.Bootstrap(context.Background(), db, "integration@rac.test", "integration-test-password-2026"); e != nil {
 		t.Fatal(e)
 	}
 	h := New(db, false, "http://localhost:4200").Handler()
