@@ -2,7 +2,7 @@
 
 Status: foundation under implementation; not production ready. Requirements are preserved in requirements.md.
 
-Use an Angular SPA and a Go modular monolith backed by MySQL 8.4. API namespace is /api/v1. Browser traffic goes through the same-origin reverse proxy. Production requires internal HTTPS terminated by the organization’s reverse proxy; management binds loopback by default.
+Use an Angular SPA and a Laravel 12 HTTP API backed by MySQL 8.4. The Go migration and bootstrap jobs remain during the transition; the Go HTTP API is retained for rollback. API namespace is /api/v1. Browser traffic goes through the same-origin reverse proxy. Production requires internal HTTPS terminated by the organization’s reverse proxy; management binds loopback by default.
 
 Modules own their repositories and services. Build inventory and identity first, then operations, monitoring, vendor adapters, reporting and AI. Workers use bounded concurrency, deadlines, retry/backoff and deduplicated alerts. Monitoring observations never complete human checklist tasks. Vendor adapters and AI start read-only. No live infrastructure addresses or observations are seeded.
 
@@ -24,8 +24,6 @@ Each gate requires implemented behavior and passing tests before claiming comple
 
 ## Implemented code organization
 
-The API composition root is `backend/cmd/api/main.go`. Environment settings live in `internal/config`; database connection and migration lifecycle in `internal/database`; bootstrap authentication in `internal/auth`; shared transactional audit writes in `internal/audit`. Inventory validation and SQL live in `internal/inventory`. The HTTP layer in `internal/api` is split into routing, middleware, authentication, health, JSON responses, inventory and user handlers. Audit writes remain in the same transaction as business mutations. Authentication/user HTTP handlers still own their SQL; these can be extracted when their domain workflows grow.
+The Laravel HTTP API is in `laravel/`: routes are in `routes/api.php`, request guards in `app/Http/Middleware`, and the current foundation handlers in `app/Http/Controllers/NetworkController.php`. It uses the existing schema, password hashes and opaque session format. The Go code in `backend/` still supplies the versioned migration and initial bootstrap jobs and is kept for rollback. The API does not run both servers together.
 
-Angular `app.ts` now composes session restoration, login and the authenticated workspace. `core/auth` owns the session service; `core/api` owns typed request models, inventory access and error messages. `features/auth` contains login; `features/inventory` contains navigation and record creation. `shared/record-table` renders paginated records. Component styles own layout; global styles provide common typography and controls. Requests are cancelled on component destruction and when changing the active inventory section. Form instances are destroyed on cancel/navigation, clearing their state.
-
-The HTTP paths, database schema, deployment commands and dependency versions remain unchanged. Offset parsing now rejects partially numeric values such as `1junk`. The refactor is about maintainability, not a measured performance improvement.
+Angular `app.ts` composes session restoration, login and the authenticated workspace. `core/auth` owns the session service; `core/api` owns typed request models; feature components handle inventory and presentation. The initial Laravel implementation preserves the existing API paths and database tables. Further modularization and a production PHP server remain follow-up work.

@@ -1,3 +1,5 @@
+> **Laravel transition:** The Compose API now uses Laravel; native Go API and Go API test instructions below describe the retained legacy implementation. Use the root README for current setup and Laravel tests.
+
 # Run and test locally
 
 This guide runs the implemented foundation: login, buildings, locations, device registration and audit records. Monitoring and later operational modules are not implemented yet.

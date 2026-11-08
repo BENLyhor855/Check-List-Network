@@ -1,12 +1,12 @@
 # Foundation HTTP API
 
-All responses are JSON except successful logout (204). Error envelope: `{"error":"message"}`. Authentication is an opaque HttpOnly cookie. Every mutation requires Origin equal to APP_ORIGIN and application/json. Request body limit: 64 KiB; request timeout: 10 seconds. Lists return at most 100 items and accept nonnegative offset up to 1,000,000. No CORS access is enabled.
+All responses are JSON except successful logout (204). Error envelope: `{"error":"message"}`. Authentication is an opaque HttpOnly cookie. Every mutation requires Origin equal to APP_ORIGIN and application/json. Request body limit: 64 KiB. The current Laravel development server does not enforce the previous Go server’s 10-second request deadline. Lists return at most 100 items and accept nonnegative offset up to 1,000,000. No CORS access is enabled.
 
 | Method | Path | Access / request |
 | --- | --- | --- |
 | GET | /health/live | process liveness |
 | GET | /health/ready | database ping |
-| POST | /api/v1/auth/login | email, password; ten attempts/minute per socket peer |
+| POST | /api/v1/auth/login | email, password; ten attempts/minute per client IP, using the local cache |
 | POST | /api/v1/auth/logout | revoke current session, clear cookie |
 | GET | /api/v1/auth/me | current id, email, role |
 | GET | /api/v1/buildings | inventory.read; paginated items |
