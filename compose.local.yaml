@@ -1,9 +1,0 @@
-# Local computers use standard CA trust. Compose 2.24.4+ required.
-services:
-  prepare:
-    build:
-      secrets: !reset []
-  app:
-    build:
-      secrets: !reset []
-secrets: !reset {}

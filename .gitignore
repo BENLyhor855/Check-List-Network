@@ -1,6 +1,2 @@
-node_modules/
-frontend/dist/
-frontend/.angular/
 .env
 *.log
-backend/api

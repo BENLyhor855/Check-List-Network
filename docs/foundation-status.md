@@ -1,3 +1,5 @@
+> Historical record: these results describe a previous implementation and do not verify the current Laravel application. See the root README for current setup.
+
 # Initial foundation increment
 
 Implemented: Go API and Angular workspace, MySQL migrations, opaque sessions, bcrypt passwords, fixed seeded roles and database permission checks, building/location/device creation and lists, transactional inventory audit, API user creation and role/deactivation updates. Architecture, future schema plan, API contract, backup/rollback guidance and original requirements are documented.

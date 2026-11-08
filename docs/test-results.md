@@ -1,3 +1,5 @@
+> Historical record: these results describe a previous implementation and do not verify the current Laravel application. See the root README for current setup.
+
 # Test results — 6 November 2026
 
 Tested the current foundation implementation in the cloud development environment.

@@ -14,7 +14,7 @@ Artisan::command('rac:prepare', function () {
             $stmt = $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(?)'); $stmt->execute(['001_foundation.sql']);
         }
         if ((int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0) {
-            $email = getenv('BOOTSTRAP_EMAIL'); $password = getenv('BOOTSTRAP_PASSWORD');
+            $email = env('BOOTSTRAP_EMAIL'); $password = env('BOOTSTRAP_PASSWORD');
             if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 254 || !$password || strlen($password) < 14 || strlen($password) > 72) throw new RuntimeException('First startup requires a valid bootstrap email and 14–72 byte password');
             $stmt = $pdo->prepare('INSERT INTO users(email,password_hash,role_id) VALUES(?,?,1)');
             $stmt->execute([strtolower($email), password_hash($password, PASSWORD_BCRYPT, ['cost'=>12])]);

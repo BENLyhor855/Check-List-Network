@@ -70,7 +70,7 @@ Use the following technologies:
 - Historical data management.
 
 **Infrastructure**
-- Docker and Docker Compose.
+- Run directly on the host using PHP, Composer and MySQL.
 - Ubuntu Server deployment.
 - Existing Proxmox environment.
 - Open-source technologies wherever practical.
@@ -741,8 +741,7 @@ Do not commit real credentials into Git.
 Create a deployment solution suitable for Ubuntu Server running inside Proxmox.
 
 Provide:
-- Dockerfiles.
-- Docker Compose.
+- Host-based PHP and Laravel deployment instructions.
 - MySQL configuration.
 - Database migration commands.
 - Environment variable examples.
@@ -863,7 +862,7 @@ Follow these implementation rules:
 14. Add meaningful error handling and application logs.
 15. Keep README documentation updated.
 16. Provide database migration and rollback instructions.
-17. Ensure Docker Compose can start the development environment.
+17. Ensure PHP and Artisan can start the development environment directly.
 18. Do not claim a feature is complete until it has been implemented and tested.
 
 At the end of every development phase, report:

@@ -1,23 +1,37 @@
 # RAC Network Operations
 
-A Laravel 12 and MySQL foundation for the Royal Academy of Cambodia. Laravel serves both the network workspace and its API. The application provides sign-in, role-based access, building, location and device registration, and an audit trail. Device status remains unknown until monitoring is connected.
+A Laravel 12 and MySQL foundation for the Royal Academy of Cambodia. Laravel serves the workspace and API for sign-in, role-based access, building, location and device registration, and audit records. Device status remains unknown until monitoring is connected.
 
-## Local setup
+## Run locally
 
-Requirements: Docker and Compose. This development configuration binds web and MySQL to loopback.
+Install PHP 8.4 or later, Composer, MySQL 8.4, and the PHP extensions required by Laravel and Composer, including PDO MySQL, PDO SQLite (for tests), mbstring, XML, ctype, fileinfo, OpenSSL and tokenizer. Make sure the MySQL service is running.
 
-1. Copy `.env.example` to `.env` and protect it (`chmod 600 .env`). Set unique `DB_PASSWORD`, `DB_ROOT_PASSWORD`, `BOOTSTRAP_EMAIL`, and a 14–72 byte `BOOTSTRAP_PASSWORD`. Generate `APP_KEY` as `base64:` followed by 32 random bytes in base64, for example `printf 'base64:'; openssl rand -base64 32`.
-2. Run `docker compose build` and `docker compose up -d`. The Laravel `rac:prepare` command applies the existing foundation SQL once under a database lock and creates the bootstrap administrator only if no users exist. It recognizes the earlier `schema_migrations` marker and preserves existing records. Back up an existing database and test on a restored copy before switching traffic.
-3. Open `http://localhost:4200` and sign in with the bootstrap account. `/health/ready` checks the database connection. `node scripts/smoke.mjs` tests login and logout against the running stack.
+1. Create a MySQL database and a local database user with permission to create and alter its tables. For example, create an empty database named `racnoc`; configure its user and password in the next step. Use a separate database for testing.
+2. From a terminal in the project root, run:
 
-Builds use an optional BuildKit CA secret (`RAC_CA_BUNDLE`, default `/etc/ssl/certs/ca-certificates.crt`); for standard local Docker, use `docker compose -f compose.yaml -f compose.local.yaml build`.
+   ```sh
+   cd laravel
+   composer install
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+3. Edit `laravel/.env`: set `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` to your local MySQL credentials. Set `BOOTSTRAP_EMAIL` and a unique `BOOTSTRAP_PASSWORD` of 14–72 bytes for the first administrator. Keep this file private. `APP_URL` defaults to `http://localhost:4200` and must match the browser origin, including port.
+4. Run:
+
+   ```sh
+   php artisan rac:prepare
+   php artisan serve --host=127.0.0.1 --port=4200
+   ```
+
+   Open `http://localhost:4200` and sign in with the bootstrap credentials. The preparation command applies the foundation SQL once and creates the first administrator only if the user table is empty. It recognizes the previous migration marker and preserves existing records. Back up an existing database and test with a restored copy before switching traffic.
 
 ## Tests
 
-From `laravel/`, run `composer install` and `php artisan test` with PHP 8.4+ and SQLite PDO. Tests use an isolated in-memory database. For the MySQL startup workflow, run the local stack above against a disposable database before using an existing installation.
+From `laravel/`, run `php artisan test`; tests use an isolated in-memory SQLite database. With the local server and MySQL running, `node scripts/smoke.mjs` from the project root checks readiness, login, inventory access and logout. This smoke check signs in with the bootstrap credentials and creates a login audit entry.
 
-The [API contract](docs/api.md), [requirements](docs/requirements.md), [database notes](docs/database.md), and [network deployment checklist](checklists/network-deployment.md) remain available. Keep credentials, completed site records and infrastructure data private.
+See the [API contract](docs/api.md), [requirements](docs/requirements.md), [database notes](docs/database.md), and [network deployment checklist](checklists/network-deployment.md). Keep credentials, site records and infrastructure data private.
 
 ## Limitations
 
-This foundation is not production ready. Compose uses Laravel's development server and local file-backed throttling. Production needs an appropriate PHP application server, HTTPS, shared rate limiting, hardened database privileges, a security review and tested backups. Password lifecycle, device editing, monitoring and later operational modules remain future work.
+The built-in server and file-based throttling are for local development. Production needs an appropriate PHP application server, HTTPS, shared rate limiting, hardened database privileges, a security review and tested backups. Password lifecycle, device editing, monitoring and later operational modules remain future work.

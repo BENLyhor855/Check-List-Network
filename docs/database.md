@@ -18,6 +18,6 @@ Planned migrations, in dependency order:
 
 All business records require created_at/updated_at and bounded text fields. History and audit are append-only to the runtime database principal. Each write that changes workflow state creates audit within the same transaction. Enumerated state transitions belong in tested service logic; database constraints reinforce valid states. Delete behavior is restrictive by default. Historical records use immutable snapshots where edits would change past evidence.
 
-Apply: `docker compose run --rm prepare`. The migration runner takes an advisory lock and records successful filenames. Never edit an applied migration. Add a forward migration. Current simple runner supports statement-separated SQL only, not procedures or delimiters.
+Apply: `cd laravel && php artisan rac:prepare`. The migration runner takes an advisory lock and records successful filenames. Never edit an applied migration. Add a forward migration. Current simple runner supports statement-separated SQL only, not procedures or delimiters.
 
-Rollback: this release deliberately has no automatic destructive down migration. Stop writes, create an encrypted backup, test its restoration to a separate database, then restore the preceding database and matching application image. First-install removal destroys all data and requires explicit operator action; never use `down -v` as routine maintenance.
+Rollback: this release deliberately has no automatic destructive down migration. Stop writes, create an encrypted backup, test its restoration to a separate database, then restore the preceding database and matching application version. Removing a database destroys its data and requires explicit operator action.
