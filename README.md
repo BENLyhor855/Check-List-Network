@@ -1,6 +1,6 @@
 # RAC Network Operations
 
-A Laravel 12 and MySQL foundation for the Royal Academy of Cambodia. Laravel serves the workspace and API for sign-in, role-based access, building, location and device registration, and audit records. Device status remains unknown until monitoring is connected.
+A Laravel 12 and MySQL foundation for the Royal Academy of Cambodia. Laravel serves the workspace and API for sign-in, role-based access, building, location and device registration, and audit records. Device status remains unknown until monitoring is connected. The daily checklist lets staff record manual OK, issue, or not-applicable results with notes for each registered device, see totals, and print a dated summary. UniFi and Meraki MR44 devices can be entered in inventory; no vendor connection or device control is implemented yet.
 
 ## Run locally
 
@@ -24,7 +24,7 @@ Install PHP 8.4 or later, Composer, MySQL 8.4, and the PHP extensions required b
    php artisan serve --host=127.0.0.1 --port=4200
    ```
 
-   Open `http://localhost:4200` and sign in with the bootstrap credentials. The preparation command applies the foundation SQL once and creates the first administrator only if the user table is empty. It recognizes the previous migration marker and preserves existing records. Back up an existing database and test with a restored copy before switching traffic.
+   Open `http://localhost:4200` and sign in with the bootstrap credentials. The preparation command applies the foundation and daily-check SQL migrations once and creates the first administrator only if the user table is empty. It recognizes previous migration markers and preserves existing records. After updating an existing installation, run `php artisan rac:prepare` again before opening the checklist. Back up an existing database and test with a restored copy before switching traffic.
 
 ## Tests
 

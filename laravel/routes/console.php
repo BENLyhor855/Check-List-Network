@@ -7,11 +7,13 @@ Artisan::command('rac:prepare', function () {
     if ((int) $pdo->query("SELECT GET_LOCK('racnoc_migrations',30)")->fetchColumn() !== 1) throw new RuntimeException('Migration lock unavailable');
     try {
         $pdo->exec('CREATE TABLE IF NOT EXISTS schema_migrations(version VARCHAR(120) PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)');
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM schema_migrations WHERE version=?');
-        $stmt->execute(['001_foundation.sql']);
-        if (!(int) $stmt->fetchColumn()) {
-            foreach (explode(';', file_get_contents(database_path('schema/001_foundation.sql'))) as $sql) if (trim($sql) !== '') $pdo->exec($sql);
-            $stmt = $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(?)'); $stmt->execute(['001_foundation.sql']);
+        foreach (['001_foundation.sql', '002_daily_checks.sql'] as $migration) {
+            $stmt = $pdo->prepare('SELECT COUNT(*) FROM schema_migrations WHERE version=?');
+            $stmt->execute([$migration]);
+            if (!(int) $stmt->fetchColumn()) {
+                foreach (explode(';', file_get_contents(database_path('schema/'.$migration))) as $sql) if (trim($sql) !== '') $pdo->exec($sql);
+                $stmt = $pdo->prepare('INSERT INTO schema_migrations(version) VALUES(?)'); $stmt->execute([$migration]);
+            }
         }
         if ((int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0) {
             $email = env('BOOTSTRAP_EMAIL'); $password = env('BOOTSTRAP_PASSWORD');

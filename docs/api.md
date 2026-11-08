@@ -9,6 +9,8 @@ All responses are JSON except successful logout (204). Error envelope: `{"error"
 | POST | /api/v1/auth/login | email, password; ten attempts/minute per client IP, using the local cache |
 | POST | /api/v1/auth/logout | revoke current session, clear cookie |
 | GET | /api/v1/auth/me | current id, email, role |
+| GET | /api/v1/checks?date=YYYY-MM-DD | inventory.read; devices and manual check results for the date, with totals |
+| POST | /api/v1/checks | inventory.write; device_id, date, result (ok, issue, not_applicable), optional notes; updates the same device/date |
 | GET | /api/v1/buildings | inventory.read; paginated items |
 | POST | /api/v1/buildings | inventory.write; name |
 | GET | /api/v1/locations | inventory.read; paginated items |

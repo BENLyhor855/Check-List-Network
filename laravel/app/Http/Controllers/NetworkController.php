@@ -9,18 +9,18 @@ use Symfony\Component\HttpFoundation\Cookie;
 class NetworkController extends Controller
 {
     private function error(string $message, int $status) { return response()->json(['error' => $message], $status); }
-    private function actor(Request $request) {
+    protected function actor(Request $request) {
         $token = $request->cookie('rac_session');
         if (!is_string($token) || $token === '') return null;
         return DB::table('sessions as s')->join('users as u', 'u.id', '=', 's.user_id')->join('roles as r', 'r.id', '=', 'u.role_id')
             ->where('s.token_hash', hash('sha256', $token))->where('s.expires_at', '>', now('UTC'))->where('u.active', true)
             ->select('u.id', 'u.email', 'r.name as role')->first();
     }
-    private function allowed($actor, string $permission): bool {
+    protected function allowed($actor, string $permission): bool {
         return DB::table('users as u')->join('role_permissions as rp', 'rp.role_id', '=', 'u.role_id')
             ->join('permissions as p', 'p.id', '=', 'rp.permission_id')->where('u.id', $actor->id)->where('p.name', $permission)->exists();
     }
-    private function audit(int $user, string $action, string $target): void {
+    protected function audit(int $user, string $action, string $target): void {
         DB::table('audit_logs')->insert(['user_id' => $user, 'action' => $action, 'target' => $target, 'result' => 'success']);
     }
     private function cookie(string $value, int $expires): Cookie {

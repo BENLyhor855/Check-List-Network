@@ -11,6 +11,7 @@ class NetworkApiTest extends TestCase
         $this->withCredentials();
         config(['app.url' => 'http://localhost:4200', 'cache.default' => 'array', 'session.secure' => false]);
         DB::unprepared('CREATE TABLE roles (id INTEGER PRIMARY KEY, name TEXT NOT NULL); CREATE TABLE permissions (id INTEGER PRIMARY KEY, name TEXT NOT NULL); CREATE TABLE role_permissions (role_id INTEGER, permission_id INTEGER); CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password_hash TEXT, role_id INTEGER, active INTEGER DEFAULT 1); CREATE TABLE sessions (token_hash TEXT PRIMARY KEY, user_id INTEGER, expires_at TEXT); CREATE TABLE buildings (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE); CREATE TABLE locations (id INTEGER PRIMARY KEY AUTOINCREMENT, building_id INTEGER, name TEXT, FOREIGN KEY(building_id) REFERENCES buildings(id)); CREATE TABLE devices (id INTEGER PRIMARY KEY AUTOINCREMENT, asset_id TEXT UNIQUE, name TEXT, manufacturer TEXT, model TEXT, serial_number TEXT, management_ip TEXT, category TEXT, location_id INTEGER, status TEXT DEFAULT "unknown", notes TEXT, FOREIGN KEY(location_id) REFERENCES locations(id)); CREATE TABLE audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, action TEXT, target TEXT, result TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)');
+        DB::unprepared('CREATE TABLE daily_checks (id INTEGER PRIMARY KEY AUTOINCREMENT, device_id INTEGER NOT NULL, check_date TEXT NOT NULL, result TEXT NOT NULL, notes TEXT NOT NULL, checked_by INTEGER NOT NULL, updated_at TEXT, UNIQUE(device_id,check_date), FOREIGN KEY(device_id) REFERENCES devices(id), FOREIGN KEY(checked_by) REFERENCES users(id))');
         DB::table('roles')->insert([['id'=>1,'name'=>'Super Administrator'], ['id'=>6,'name'=>'Read-only Viewer']]);
         foreach (['inventory.read','inventory.write','users.manage','audit.read'] as $i => $name) { DB::table('permissions')->insert(['id'=>$i+1,'name'=>$name]); DB::table('role_permissions')->insert(['role_id'=>1,'permission_id'=>$i+1]); }
         DB::table('role_permissions')->insert(['role_id'=>6,'permission_id'=>1]);
@@ -36,6 +37,23 @@ class NetworkApiTest extends TestCase
         $this->assertSame  (1, DB::table('audit_logs')->count());
         $this->withUnencryptedCookie('rac_session',$this->token(2))->withHeader('Origin','http://localhost:4200')->postJson('/api/v1/buildings',['name'=>'Other'])->assertStatus(403);
         $this->withUnencryptedCookie('rac_session',str_repeat('2', 64))->getJson('/api/v1/audit')->assertStatus(403);
+    }
+    public function test_daily_checks_are_saved_updated_summarized_and_access_controlled(): void {
+        DB::table('buildings')->insert(['id'=>1,'name'=>'Office']);
+        DB::table('locations')->insert(['id'=>1,'building_id'=>1,'name'=>'Floor 1']);
+        DB::table('devices')->insert(['id'=>1,'name'=>'Access point','asset_id'=>'AP-1','manufacturer'=>'Meraki','model'=>'MR44','category'=>'access point','location_id'=>1,'notes'=>'']);
+        $token=$this->token(); $viewer=$this->token(2);
+        $this->withUnencryptedCookie('rac_session',$viewer)->getJson('/api/v1/checks?date=2026-11-09')->assertOk()->assertJsonPath('summary.pending',1);
+        $payload=['device_id'=>1,'date'=>'2026-11-09','result'=>'issue','notes'=>'Power issue'];
+        $this->withUnencryptedCookie('rac_session',$viewer)->withHeader('Origin','http://localhost:4200')->postJson('/api/v1/checks',$payload)->assertStatus(403);
+        $this->withUnencryptedCookie('rac_session',$token)->withHeader('Origin','http://localhost:4200')->postJson('/api/v1/checks',$payload)->assertOk();
+        $this->withUnencryptedCookie('rac_session',$token)->getJson('/api/v1/checks?date=2026-11-09')->assertOk()->assertJsonPath('summary.issue',1)->assertJsonPath('items.0.notes','Power issue');
+        $payload['result']='ok'; $payload['notes']='Resolved';
+        $this->withUnencryptedCookie('rac_session',$token)->withHeader('Origin','http://localhost:4200')->postJson('/api/v1/checks',$payload)->assertOk();
+        $this->assertSame(1,DB::table('daily_checks')->count());
+        $this->assertDatabaseHas('daily_checks',['device_id'=>1,'result'=>'ok','notes'=>'Resolved']);
+        $this->assertSame(2,DB::table('audit_logs')->where('action','check.record')->count());
+        $this->withUnencryptedCookie('rac_session',$viewer)->getJson('/api/v1/checks?date=2026-02-30')->assertStatus(400);
     }
     public function test_origin_validation_and_revocation(): void {
         $token=$this->token();
