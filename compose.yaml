@@ -14,34 +14,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
-  migrate:
-    build:
-      context: ./backend
-      secrets: [proxy_ca]
-    command: ["migrate"]
-    environment: &database
-      DB_ADDRESS: db:3306
-      DB_NAME: racnoc
-      DB_USER: racnoc
-      DB_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      db: {condition: service_healthy}
-  bootstrap:
-    build:
-      context: ./backend
-      secrets: [proxy_ca]
-    command: ["bootstrap"]
-    environment:
-      <<: *database
-      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?Set BOOTSTRAP_EMAIL}
-      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?Set BOOTSTRAP_PASSWORD}
-    depends_on:
-      migrate: {condition: service_completed_successfully}
-  api:
+  prepare:
     build:
       context: ./laravel
       secrets: [proxy_ca]
-    environment:
+    command: ["php", "artisan", "rac:prepare"]
+    environment: &app
       APP_ENV: local
       APP_DEBUG: "false"
       APP_KEY: ${APP_KEY:?Set APP_KEY}
@@ -52,22 +30,25 @@ services:
       DB_DATABASE: racnoc
       DB_USERNAME: racnoc
       DB_PASSWORD: ${DB_PASSWORD}
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?Set BOOTSTRAP_EMAIL}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?Set BOOTSTRAP_PASSWORD}
       SESSION_SECURE_COOKIE: ${COOKIE_SECURE:-false}
       CACHE_STORE: file
       LOG_CHANNEL: stderr
     depends_on:
-      bootstrap: {condition: service_completed_successfully}
+      db: {condition: service_healthy}
+  app:
+    build:
+      context: ./laravel
+      secrets: [proxy_ca]
+    environment: *app
+    ports: ["127.0.0.1:4200:8080"]
+    depends_on:
+      prepare: {condition: service_completed_successfully}
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
-  web:
-    build:
-      context: ./frontend
-      secrets: [proxy_ca]
-    ports: ["127.0.0.1:4200:80"]
-    depends_on: [api]
 volumes:
   mysql_data:
-
 secrets:
   proxy_ca:
     file: ${RAC_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}

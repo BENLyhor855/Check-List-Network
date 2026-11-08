@@ -1,3 +1,3 @@
-# Laravel API
+# Laravel application
 
-This directory contains the Laravel 12 HTTP API (PHP 8.4+). See the [root README](../README.md) for setup, test commands, schema compatibility, and deployment limitations. The Angular frontend and legacy Go migration/bootstrap jobs live in adjacent directories.
+This directory contains the workspace, API and database preparation command. See the [root README](../README.md) for setup, testing and limitations.

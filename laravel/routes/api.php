@@ -3,6 +3,7 @@
 use App\Http\Controllers\NetworkController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', fn () => view('workspace'));
 Route::get('/health/live', [NetworkController::class, 'live']);
 Route::get('/health/ready', [NetworkController::class, 'ready']);
 Route::post('/api/v1/auth/login', [NetworkController::class, 'login'])->middleware('throttle:10,1');

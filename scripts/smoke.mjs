@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const settings=Object.fromEntries(readFileSync(new URL('../.env',import.meta.url),'utf8').trim().split('\n').filter(l=>l&&!l.startsWith('#')).map(l=>{const i=l.indexOf('=');return [l.slice(0,i),l.slice(i+1)];}));
 const base=settings.APP_ORIGIN||'http://localhost:4200';
 let response=await fetch(base+'/health/ready');assert.equal(response.status,200);assert.equal((await response.json()).status,'ready');
-response=await fetch(base);assert.equal(response.status,200);assert.match(await response.text(),/<app-root>/);
+response=await fetch(base);assert.equal(response.status,200);assert.match(await response.text(),/RAC Network Operations/);
 response=await fetch(base+'/api/v1/devices');assert.equal(response.status,401);
 response=await fetch(base+'/api/v1/auth/login',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({email:settings.BOOTSTRAP_EMAIL,password:settings.BOOTSTRAP_PASSWORD})});assert.equal(response.status,200);
 const cookie=response.headers.get('set-cookie').split(';')[0];

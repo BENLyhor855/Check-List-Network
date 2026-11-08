@@ -1,16 +1,9 @@
-# Local computers use the container images' standard CA trust.
-# Compose 2.24.4+ is required for !reset.
+# Local computers use standard CA trust. Compose 2.24.4+ required.
 services:
-  migrate:
+  prepare:
     build:
       secrets: !reset []
-  bootstrap:
-    build:
-      secrets: !reset []
-  api:
-    build:
-      secrets: !reset []
-  web:
+  app:
     build:
       secrets: !reset []
 secrets: !reset {}

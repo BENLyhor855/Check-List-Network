@@ -1,7 +1,0 @@
-@if (checkingSession()) {
-  <p role="status">Checking session…</p>
-} @else if (auth.user(); as user) {
-  <app-workspace [user]="user" />
-} @else {
-  <app-login />
-}

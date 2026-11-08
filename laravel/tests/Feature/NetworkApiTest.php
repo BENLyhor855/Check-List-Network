@@ -16,6 +16,9 @@ class NetworkApiTest extends TestCase
         DB::table('role_permissions')->insert(['role_id'=>6,'permission_id'=>1]);
         DB::table('users')->insert([['id'=>1,'email'=>'admin@example.test','password_hash'=>password_hash('correct-horse-battery', PASSWORD_BCRYPT), 'role_id'=>1,'active'=>1],['id'=>2,'email'=>'viewer@example.test','password_hash'=>password_hash('correct-horse-battery', PASSWORD_BCRYPT), 'role_id'=>6,'active'=>1]]);
     }
+    public function test_workspace_is_served_by_laravel(): void {
+        $this->get('/')->assertOk()->assertSee('RAC Network Operations')->assertSee('/workspace.js');
+    }
     private function token(int $id = 1): string { $token = str_repeat((string)$id, 64); DB::table('sessions')->insert(['token_hash'=>hash('sha256',$token),'user_id'=>$id,'expires_at'=>now()->addHour()]); return $token; }
     public function test_login_existing_bcrypt_session_and_logout(): void {
         $this->withHeader('Origin','http://localhost:4200')->postJson('/api/v1/auth/login',['email'=>'admin@example.test','password'=>'wrong'])->assertStatus(401);
