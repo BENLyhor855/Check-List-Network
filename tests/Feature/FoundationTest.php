@@ -92,4 +92,22 @@ class FoundationTest extends TestCase {
         $this->actingAs($user)->get('/reports/inventory.xlsx?vendor=invalid')->assertSessionHasErrors('vendor');
     }
 
+    public function test_default_super_admin_requires_one_time_password_setup(): void {
+        $this->assertSame(1, User::where('role','super_admin')->count());
+        $admin=User::where('email','admin@example.com')->firstOrFail();
+        $this->assertTrue((bool)$admin->password_setup_required);
+        $this->post('/login',['email'=>'admin@example.com','password'=>'a-strong-password'])->assertSessionHasErrors('email');
+        $this->artisan('wifi:setup-admin')->expectsQuestion('Set the password for admin@example.com (at least 14 characters)','a-strong-password')->assertSuccessful();
+        $this->post('/login',['email'=>'admin@example.com','password'=>'a-strong-password'])->assertRedirect('/');
+        $this->artisan('wifi:setup-admin')->assertFailed();
+    }
+    public function test_application_rejects_additional_super_administrators(): void {
+        $admin=User::where('email','admin@example.com')->firstOrFail();
+        $payload=['name'=>'Other','email'=>'other@example.com','password'=>'a-strong-password','role'=>'super_admin'];
+        $this->actingAs($admin)->post('/admin/users',$payload)->assertSessionHasErrors('role');
+        $other=$this->user('user');
+        Livewire::actingAs($admin)->test(UserManager::class)->call('setRole',$other->id,'super_admin')->assertStatus(422);
+        $this->assertSame(1, User::where('role','super_admin')->count());
+    }
+
 }
