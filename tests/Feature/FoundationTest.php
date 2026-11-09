@@ -2,6 +2,7 @@
 namespace Tests\Feature;
 use App\Livewire\BuildingManager;
 use App\Livewire\DeviceManager;
+use App\Livewire\Overview;
 use App\Livewire\UserManager;
 use App\Models\AccessPoint;
 use App\Models\Building;
@@ -21,7 +22,7 @@ class FoundationTest extends TestCase {
     }
     public function test_management_cannot_access_admin_but_can_view_overview(): void {
         $user=$this->user('management');
-        $this->actingAs($user)->get('/')->assertOk()->assertSee('Provider data is not connected yet');
+        $this->actingAs($user)->get('/')->assertOk()->assertSee('Live status is not collected');
         $this->actingAs($user)->get('/admin/buildings')->assertForbidden();
         Livewire::actingAs($user)->test(BuildingManager::class)->assertForbidden();
     }
@@ -108,6 +109,35 @@ class FoundationTest extends TestCase {
         $other=$this->user('user');
         Livewire::actingAs($admin)->test(UserManager::class)->call('setRole',$other->id,'super_admin')->assertStatus(422);
         $this->assertSame(1, User::where('role','super_admin')->count());
+    }
+
+    public function test_inventory_search_and_filters_are_scoped_and_assignments_are_preserved(): void {
+        $admin=$this->user('it_admin'); $manager=$this->user('management');
+        $one=Building::create(['name'=>'Main','code'=>'MAIN','active'=>true]);
+        $two=Building::create(['name'=>'Annex','code'=>'ANNEX','active'=>true]);
+        $first=AccessPoint::create(['name'=>'Lobby AP','vendor'=>'meraki','serial'=>'M-001','model'=>'MR44','building_id'=>$one->id]);
+        AccessPoint::create(['name'=>'Office AP','vendor'=>'unifi','serial'=>'U-001','building_id'=>$two->id]);
+        AccessPoint::create(['name'=>'Spare AP','vendor'=>'meraki','serial'=>'M-002']);
+        Livewire::actingAs($manager)->test(DeviceManager::class)->assertForbidden();
+        Livewire::actingAs($admin)->test(DeviceManager::class)
+            ->set('search','M-001')->assertSee('Lobby AP')->assertDontSee('Office AP')->assertDontSee('Spare AP')
+            ->set('search','')->set('vendor','unifi')->assertSee('Office AP')->assertDontSee('Lobby AP')
+            ->set('vendor','')->set('building','unassigned')->assertSee('Spare AP')->assertDontSee('Lobby AP')
+            ->set('building',(string)$one->id)->assertSee('Lobby AP')->assertDontSee('Office AP')
+            ->call('clearFilters')->assertSee('Office AP')->assertSee('Spare AP');
+        $this->assertDatabaseHas('access_points',['id'=>$first->id,'building_id'=>$one->id]);
+    }
+    public function test_overview_distinguishes_unavailable_status_from_recorded_status(): void {
+        $user=$this->user('management');
+        AccessPoint::create(['name'=>'Known','vendor'=>'meraki','serial'=>'M-1','status'=>'online','observed_at'=>now()]);
+        AccessPoint::create(['name'=>'Unknown','vendor'=>'meraki','serial'=>'M-2']);
+        $this->actingAs($user)->get('/')->assertOk()->assertSee('STATUS UNAVAILABLE')->assertSee('Not live status')->assertSee('Not yet imported');
+        Livewire::actingAs($user)->test(Overview::class)->assertViewHas('accessPoints',2)->assertViewHas('online',1)->assertViewHas('offline',0)->assertViewHas('unknown',1);
+    }
+    public function test_inventory_uses_pagination(): void {
+        $admin=$this->user('it_admin');
+        for ($i=1; $i<=27; $i++) AccessPoint::create(['name'=>sprintf('AP %02d',$i),'vendor'=>'meraki','serial'=>'S-'.$i]);
+        Livewire::actingAs($admin)->test(DeviceManager::class)->assertSee('AP 01')->assertDontSee('AP 27')->call('nextPage')->assertSee('AP 27')->assertDontSee('AP 01');
     }
 
 }
