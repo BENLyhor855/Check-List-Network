@@ -14,6 +14,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout',[SessionController::class,'destroy'])->name('logout');
     Route::get('/', Overview::class)->name('overview');
     Route::get('/reports/inventory', [InventoryReportController::class,'index'])->name('reports.inventory');
+    Route::get('/reports/inventory.xlsx', [InventoryReportController::class,'xlsx'])->name('reports.inventory.xlsx');
+    Route::get('/reports/inventory.pdf', [InventoryReportController::class,'pdf'])->name('reports.inventory.pdf');
     Route::get('/reports/inventory.csv', [InventoryReportController::class,'download'])->name('reports.inventory.download');
     Route::get('/admin/integrations', [IntegrationController::class,'index'])->middleware('can:manage-integrations')->name('admin.integrations');
     Route::post('/admin/integrations', [IntegrationController::class,'store'])->middleware('can:manage-integrations')->name('admin.integrations.store');

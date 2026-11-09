@@ -69,4 +69,27 @@ class FoundationTest extends TestCase {
         $this->assertStringContainsString("'=CMD()",$csv); $this->assertStringNotContainsString('Other',$csv);
     }
 
+    public function test_excel_and_pdf_exports_are_authenticated_filtered_and_formula_safe(): void {
+        $this->get('/reports/inventory.xlsx')->assertRedirect('/login');
+        $this->get('/reports/inventory.pdf')->assertRedirect('/login');
+        $user=$this->user('management');
+        $building=Building::create(['name'=>'Campus','code'=>'CAMPUS','active'=>true]);
+        AccessPoint::create(['name'=>'=1+1','vendor'=>'meraki','serial'=>'M1','building_id'=>$building->id]);
+        AccessPoint::create(['name'=>'Excluded AP','vendor'=>'unifi','serial'=>'U1']);
+        $response=$this->actingAs($user)->get('/reports/inventory.xlsx?vendor=meraki')->assertOk();
+        $this->assertStringContainsString('spreadsheetml',$response->headers->get('Content-Type'));
+        $this->assertStringContainsString('no-store',$response->headers->get('Cache-Control'));
+        $sheet=\PhpOffice\PhpSpreadsheet\IOFactory::load($response->baseResponse->getFile()->getPathname())->getActiveSheet();
+        $this->assertSame('Name',$sheet->getCell('A1')->getValue());
+        $this->assertSame('=1+1',$sheet->getCell('A2')->getValue());
+        $this->assertSame(\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING,$sheet->getCell('A2')->getDataType());
+        $this->assertSame('Unavailable',$sheet->getCell('F2')->getValue());
+        $this->assertNull($sheet->getCell('A3')->getValue());
+        $pdf=$this->actingAs($user)->get('/reports/inventory.pdf?vendor=meraki')->assertOk();
+        $this->assertStringContainsString('application/pdf',$pdf->headers->get('Content-Type'));
+        $this->assertStringStartsWith('%PDF-', $pdf->getContent());
+        $this->assertStringContainsString('no-store',$pdf->headers->get('Cache-Control'));
+        $this->actingAs($user)->get('/reports/inventory.xlsx?vendor=invalid')->assertSessionHasErrors('vendor');
+    }
+
 }

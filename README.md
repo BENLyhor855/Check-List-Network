@@ -5,17 +5,17 @@ A Laravel 13 and Livewire application for a single Wi-Fi operations workspace. T
 ## What works
 
 - Laravel session authentication with CSRF protection, login rate limiting, account status checks and four role values: super administrator, IT administrator, management and normal user.
-- A management overview, printable inventory report with building/vendor filters and CSV export, and an administrator area. Administrators can add, edit, enable and disable buildings, assign imported APs to buildings, and view the last 100 recorded administrative changes. Super administrators can create users, change their roles and enable or disable them.
+- A management overview, inventory report with building/vendor filters and PDF, Excel (.xlsx), CSV and print options, and an administrator area. Administrators can add, edit, enable and disable buildings, assign imported APs to buildings, and view the last 100 recorded administrative changes. Super administrators can create users, change their roles and enable or disable them.
 - Super administrators can store encrypted provider API keys and test a Cisco Meraki Dashboard connection or a UniFi cloud connector connection. Provider keys are not displayed after entry. The UniFi cloud connector requires supported console firmware and site/API permissions; local-controller authentication is not implemented.
 - A manual, read-only Meraki inventory import for MR access points in a specified network. It does not delete absent devices or claim to collect device status. The import rejects paginated responses rather than silently accepting an incomplete inventory. Imported devices can be assigned to buildings.
 
 ## Not implemented yet
 
-Device status collection, UniFi device import, clients, traffic, SSIDs, charts, historical analytics, PDF/Excel file reports (CSV and print are available), scheduled reports, notifications, background synchronization, and device control are **not available**. The overview explicitly marks unavailable data instead of reporting fabricated zeros. This foundation has not been tested against real provider accounts or a MySQL deployment. Do not use it to manage production networks without completing the missing modules and a security review.
+Device status collection, UniFi device import, clients, traffic, SSIDs, charts, historical analytics, traffic/client/availability reports and scheduled reports, notifications, background synchronization, and device control are **not available**. The overview explicitly marks unavailable data instead of reporting fabricated zeros. This foundation has not been tested against real provider accounts or a MySQL deployment. Do not use it to manage production networks without completing the missing modules and a security review.
 
 ## Run locally without containers
 
-Requirements: PHP **8.4+** with PDO MySQL, mbstring, XML, ctype, fileinfo, OpenSSL and tokenizer; Composer; and MySQL 8. PHP PDO SQLite is also required to run tests. Bootstrap CSS is loaded from jsDelivr; an internet connection is needed for that styling.
+Requirements: PHP **8.4+** with PDO MySQL, mbstring, XML, ctype, fileinfo, OpenSSL and tokenizer; Composer; and MySQL 8. PHP GD, ZIP and XML extensions are required for spreadsheet exports; PDO SQLite is also required to run tests. Bootstrap CSS is loaded from jsDelivr; an internet connection is needed for that styling.
 
 1. Create an empty MySQL database and an application user with appropriate schema privileges.
 2. From the project root:
