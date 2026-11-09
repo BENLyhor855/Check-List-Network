@@ -1,6 +1,0 @@
-/vendor
-/.env
-/node_modules
-/storage/logs/*
-/storage/framework/cache/data/*
-/.phpunit.result.cache
